@@ -3,20 +3,6 @@ import options
 export options
 import base64
 
-# CREDENTIALW* {.pure.} = object
-#   Flags*: DWORD
-#   Type*: DWORD
-#   TargetName*: LPWSTR
-#   Comment*: LPWSTR
-#   LastWritten*: FILETIME
-#   CredentialBlobSize*: DWORD
-#   CredentialBlob*: LPBYTE
-#   Persist*: DWORD
-#   AttributeCount*: DWORD
-#   Attributes*: PCREDENTIAL_ATTRIBUTEW
-#   TargetAlias*: LPWSTR
-#   UserName*: LPWSTR
-
 template toLPWSTR(x:string):LPWSTR = cast[LPWSTR](&(+$x))
 template toLPCWSTR(x:string):LPCWSTR = cast[LPCWSTR](&(+$x))
 
@@ -37,7 +23,7 @@ proc setPassword*(service: string, username: string, password: string) =
     Persist: CRED_PERSIST_ENTERPRISE,
   )
   var pcred:PCREDENTIALW = cred.unsafeAddr
-  let flags:DWORD = 0 #CRED_PRESERVE_CREDENTIAL_BLOB
+  let flags:DWORD = 0
 
   let res = CredWriteW(pcred, flags)
   if res == 0:
