@@ -1,5 +1,7 @@
 # keyring
 
+**SECURITY NOTE:** Though an effort has been made to ensure secret confidentiality and memory safety, this library has not undergone strenous security testing.  Use it at your own risk.
+
 This is a Nim library that provides access to the operating system keyring.  It uses the following backends:
 
 - macOS: Keychain
