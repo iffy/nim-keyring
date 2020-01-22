@@ -11,4 +11,7 @@ srcDir        = "src"
 # Dependencies
 
 requires "nim >= 1.0.2"
-requires "winim >= 3.2.4"
+when defined(windows):
+  requires "winim >= 3.2.4"
+when defined(linux):
+  requires "dbus >= 0.0.1"
