@@ -1,10 +1,5 @@
-import os
-import osproc
 import options
 export options
-import sequtils
-import streams
-import base64
 import dbus
 import tables
 
@@ -15,7 +10,6 @@ const
   SERVICE_INTERFACE = SS_PREFIX & "Service"
   COLLECTION_INTERFACE = SS_PREFIX & "Collection"
   ITEM_INTERFACE = SS_PREFIX & "Item"
-  PROMPT_INTERFACE = SS_PREFIX & "Prompt"
   DEFAULT_COLLECTION = "/org/freedesktop/secrets/aliases/default"
 
 
@@ -26,14 +20,14 @@ const
 
 # Docker Instructions (https://georgik.rocks/how-to-start-d-bus-in-docker-container/)
 # docker run --rm -it --cap-add ipc_lock -v $(pwd):/code -w /code nimlang/nim /bin/bash
-const BASIC = """
-nimble install -y c2nim
-nimble install -y https://github.com/iffy/nim-dbus.git
+# const BASIC = """
+# nimble install -y c2nim
+# nimble install -y https://github.com/iffy/nim-dbus.git
 
-apt-get update -q && apt-get install -y dbus libdbus-1-dev gnome-keyring
-dbus-run-session -- bash
-echo '' | gnome-keyring-daemon --unlock
-"""
+# apt-get update -q && apt-get install -y dbus libdbus-1-dev gnome-keyring
+# dbus-run-session -- bash
+# echo '' | gnome-keyring-daemon --unlock
+# """
 
 proc toByteArray(s:string):seq[uint8] =
   for c in s:
@@ -188,7 +182,7 @@ proc getPassword*(service: string, username: string): Option[string] =
 proc deletePassword*(service: string, username: string) =
   ## Delete a saved password (if it exists)
   let bus = getBus(dbus.DBUS_BUS_SESSION)
-  let session_object_path = bus.openSession()
+  discard bus.openSession()
   bus.unlock(ObjectPath(DEFAULT_COLLECTION))
 
   # SearchItems
