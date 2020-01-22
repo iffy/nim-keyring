@@ -14,7 +14,9 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Set path
-      run: echo "::add-path::~/.nimble/bin"
+      run: echo "::add-path::$HOME/.nimble/bin"
+    - name: Show path
+      run: 'echo $PATH'
     - name: Install Nim
       run: |
         export CHOOSENIM_NO_ANALYTICS=1
