@@ -120,9 +120,13 @@ jobs:
         fi
         popd # exit nim-stable
         popd # exit NimBinaries
+        pwd
+    - name: show path
+      shell: pwsh
+      run: echo "$pwd"
     - name: Set path
       shell: pwsh
-      run: echo "##vso[task.prependpath]$pwd\NimBinaries\nim-stable\bin"
+      run: echo "##[add-path]$pwd\NimBinaries\nim-stable\bin"
     - name: Set path
       shell: bash
       run: echo "::add-path::$(pwd)\NimBinaries\nim-stable\bin"
