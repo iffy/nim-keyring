@@ -14,4 +14,6 @@ requires "nim >= 1.0.2"
 when defined(windows):
   requires "winim >= 3.2.4"
 when defined(linux):
-  requires "dbus >= 0.0.1"
+  # TODO: until dbus PRs are merged in, use my own version
+  # requires "dbus >= 0.0.1"
+  requires "https://github.com/iffy/nim-dbus.git#master" # nimble install https://github.com/iffy/nim-dbus.git@#master
