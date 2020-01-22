@@ -125,7 +125,7 @@ jobs:
       run: echo "##vso[task.prependpath]$pwd\NimBinaries\nim-stable\bin"
     - name: Set path
       shell: bash
-      run: echo "::add-path::$pwd\NimBinaries\nim-stable\bin"
+      run: echo "::add-path::$(pwd)\NimBinaries\nim-stable\bin"
     - name: Install nimble deps
       shell: pwsh
       run: |
