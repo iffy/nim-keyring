@@ -6,7 +6,7 @@ This is a Nim library that provides access to the operating system keyring.  It 
 
 - macOS: Keychain
 - Windows: Credential Management win32 API
-- Linux: **NOT SUPPORTED YET** but will use libsecret
+- Linux: [Secret Service API](https://specifications.freedesktop.org/secret-service/latest/index.html).  Note that no encryption is done en route to the Secret Service backend.  According to the [spec](https://specifications.freedesktop.org/secret-service/latest/ch07.html#idm46060787734752) this is probably okay.
 
 ## Usage
 
