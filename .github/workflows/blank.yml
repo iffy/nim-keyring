@@ -21,6 +21,7 @@ jobs:
         sh init.sh -y
         choosenim ${{ matrix.nim_version }}
     - name: Install deps
+      run: |
         nimble refresh
         nimble install -y
     - name: Install Linux Deps
@@ -48,6 +49,7 @@ jobs:
         sh init.sh -y
         choosenim ${{ matrix.nim_version }}
     - name: Install deps
+      run: |
         nimble refresh
         nimble install -y
     - name: Test
