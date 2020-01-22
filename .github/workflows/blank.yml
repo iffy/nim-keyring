@@ -3,29 +3,52 @@ name: CI
 on: [push]
 
 jobs:
-  test:
+  linux:
     name: Nim ${{ matrix.nim_version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         nim_version: [stable, devel]
-        os: [ubuntu-latest, macOS-latest]
-
+        os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v1
     - name: Set path
       run: echo "::add-path::$HOME/.nimble/bin"
-    - name: Show path
-      run: 'echo $PATH'
     - name: Install Nim
       run: |
         export CHOOSENIM_NO_ANALYTICS=1
         curl https://nim-lang.org/choosenim/init.sh -sSf > init.sh
         sh init.sh -y
         choosenim ${{ matrix.nim_version }}
-    - name: Test
-      run: |
+    - name: Install deps
         nimble refresh
         nimble install -y
-        nimble test
+    - name: Install Linux Deps
+      run: |
+        apt-get update -q
+        apt-get install -y dbus libdbus-1-dev gnome-keyring
+    - name: Test
+      run: dbus-run-session -- bash -c 'echo "" | gnome-keyring-daemon --unlock && nimble test'
 
+  macos:
+    name: Nim ${{ matrix.nim_version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        nim_version: [stable, devel]
+        os: [macOS-latest]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set path
+      run: echo "::add-path::$HOME/.nimble/bin"
+    - name: Install Nim
+      run: |
+        export CHOOSENIM_NO_ANALYTICS=1
+        curl https://nim-lang.org/choosenim/init.sh -sSf > init.sh
+        sh init.sh -y
+        choosenim ${{ matrix.nim_version }}
+    - name: Install deps
+        nimble refresh
+        nimble install -y
+    - name: Test
+      run: nimble test
