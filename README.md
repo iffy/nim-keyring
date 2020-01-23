@@ -1,6 +1,6 @@
 # keyring
 
-![](https://github.com/iffy/nim-keyring/workflows/CI/badge.svg?branch=master)
+<a href="https://github.com/iffy/nim-keyring/actions"><img src="https://github.com/iffy/nim-keyring/workflows/CI/badge.svg?branch=master"/></a>
 
 
 **SECURITY NOTE:** Though an effort has been made to ensure secret confidentiality and memory safety, this library has not undergone strenuous security testing.  Use it at your own risk.
