@@ -14,7 +14,7 @@ This is a Nim library that provides access to the operating system keyring.  It 
 ## Usage
 
 ```
-nimble install https://github.com/iffy/keyring.git
+nimble install keyring
 ```
 
 ```nim
