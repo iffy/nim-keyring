@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        nim_version: [stable, devel]
+        nimversion: [stable, devel]
         os: [macOS-latest, windows-latest]
     steps:
     - uses: actions/checkout@v1
