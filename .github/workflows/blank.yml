@@ -4,22 +4,15 @@ on: [push]
 
 jobs:
   linux:
-    name: Nim ${{ matrix.nim_version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        nim_version: [stable, devel]
-        os: [ubuntu-latest]
+        nimversion: [stable, devel]
     steps:
     - uses: actions/checkout@v1
-    - name: Set path
-      run: echo "::add-path::$HOME/.nimble/bin"
-    - name: Install Nim
-      run: |
-        export CHOOSENIM_NO_ANALYTICS=1
-        curl https://nim-lang.org/choosenim/init.sh -sSf > init.sh
-        sh init.sh -y
-        choosenim ${{ matrix.nim_version }}
+    - uses: iffy/install-nim@master
+      with:
+        nimversion: ${{ matrix.nimversion }}
     - name: Install deps
       run: |
         nimble refresh
@@ -31,23 +24,17 @@ jobs:
     - name: Test
       run: dbus-run-session -- bash -c 'echo "" | gnome-keyring-daemon --unlock && nimble test'
 
-  macos:
-    name: Nim ${{ matrix.nim_version }} on ${{ matrix.os }}
+  other:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        nim_version: [stable, devel]
-        os: [macOS-latest]
+        nimversion: [stable, devel]
+        os: [macOS-latest, windows-latest]
     steps:
     - uses: actions/checkout@v1
-    - name: Set path
-      run: echo "::add-path::$HOME/.nimble/bin"
-    - name: Install Nim
-      run: |
-        export CHOOSENIM_NO_ANALYTICS=1
-        curl https://nim-lang.org/choosenim/init.sh -sSf > init.sh
-        sh init.sh -y
-        choosenim ${{ matrix.nim_version }}
+    - uses: iffy/install-nim@master
+      with:
+        nimversion: ${{ matrix.nimversion }}
     - name: Install deps
       run: |
         nimble refresh
@@ -55,87 +42,4 @@ jobs:
     - name: Test
       run: nimble test
 
-  # based on https://github.com/mratsim/weave/blob/master/azure-pipelines.yml
-  windows:
-    name: Nim stable on Windows
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Long path support
-      shell: pwsh  
-      run: Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Value 1
-    
-    - name: Deps
-      shell: bash
-      run: |
-        echo "PATH=${PATH}"
-        set -e
-        echo "Installing MinGW-w64"
-        if [[ $PLATFORM == "x86" ]]; then
-          MINGW_FILE="i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z"
-          MINGW_URL="https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/8.1.0/threads-posix/dwarf/${MINGW_FILE}"
-          MINGW_DIR="mingw32"
-        else
-          MINGW_FILE="x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z"
-          MINGW_URL="https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/8.1.0/threads-posix/seh/${MINGW_FILE}"
-          MINGW_DIR="mingw64"
-        fi
-        mkdir -p mingwCache
-        pushd mingwCache
-        if [[ ! -e "$MINGW_FILE" ]]; then
-          rm -f *.7z
-          curl -OLsS "$MINGW_URL"
-        fi
-        7z x -y -bd "$MINGW_FILE" >/dev/null
-        mkdir -p /c/custom
-        mv "$MINGW_DIR" /c/custom/
-        popd
-        echo "##vso[task.prependpath]/c/custom/${MINGW_DIR}/bin"
-    - name: Build Nim
-      shell: bash
-      run: |
-        echo "PATH=${PATH}"
-        BRANCH="v$(curl https://nim-lang.org/channels/stable)"
-        mkdir -p NimBinaries
-        pushd NimBinaries
-        if [ ! -x "nim-stable/bin/nim" ]; then
-          git clone -b "${BRANCH}" https://github.com/nim-lang/nim "nim-stable/"
-          pushd "nim-stable"
-          git clone --depth 1 https://github.com/nim-lang/csources csources/
-          pushd csources
-          make -j $ncpu CC=gcc
-          popd
-          rm -rf csources
-          bin/nim c koch
-          ./koch boot -d:release
-          ./koch tools
-        else
-          pushd "nim-stable"
-          git fetch origin "${BRANCH}"
-          if [[ $(git merge FETCH_HEAD | grep -c "Already up to date.") -ne 1 ]]; then
-            bin/nim c koch
-            ./koch boot -d:release
-            ./koch tools
-          fi
-        fi
-        popd # exit nim-stable
-        popd # exit NimBinaries
-        pwd
-    - name: show path
-      shell: pwsh
-      run: echo "$pwd"
-    - name: Set path
-      shell: pwsh
-      run: echo "##[add-path]$pwd\NimBinaries\nim-stable\bin"
-    - name: Set path
-      shell: bash
-      run: echo "::add-path::$(pwd)\NimBinaries\nim-stable\bin"
-    - name: Install nimble deps
-      shell: pwsh
-      run: |
-        echo $Env:Path
-        nimble refresh
-        nimble install -y
-    - name: Test
-      shell: bash
-      run: nimble test
+  
