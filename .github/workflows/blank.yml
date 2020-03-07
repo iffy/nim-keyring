@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        nimversion: [stable, devel]
+        nimversion: [stable]
     steps:
     - uses: actions/checkout@v1
     - uses: iffy/install-nim@master
@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        nimversion: [stable, devel]
+        nimversion: [stable]
         os: [macOS-latest, windows-latest]
     steps:
     - uses: actions/checkout@v1
