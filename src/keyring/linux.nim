@@ -82,7 +82,7 @@ proc unlock(bus:Bus, thing:ObjectPath) =
   assert $(unlock_result[0].arrayValue[0].objectPathValue) == $thing
   assert $(unlock_result[1].objectPathValue) == "/" # special value indicating no prompt needed
 
-proc setPassword*(service: string, username: string, password: string) =
+proc setPassword*(service: string, username: string, password: string) {.gcsafe.} =
   ## Save a password in the OS keychain
   let label = service & ":" & username
   let bus = getBus(dbus.DBUS_BUS_SESSION)
@@ -135,7 +135,7 @@ proc setPassword*(service: string, username: string, password: string) =
   create_msg.append(true)
   discard bus.call(create_msg)
 
-proc getPassword*(service: string, username: string): Option[string] =
+proc getPassword*(service: string, username: string): Option[string] {.gcsafe.} =
   ## Retrieve a previously-saved password from the OS keychain
   let bus = getBus(dbus.DBUS_BUS_SESSION)
   let session_object_path = bus.openSession()
@@ -179,7 +179,7 @@ proc getPassword*(service: string, username: string): Option[string] =
   except:
     return none[string]()
 
-proc deletePassword*(service: string, username: string) =
+proc deletePassword*(service: string, username: string) {.gcsafe.} =
   ## Delete a saved password (if it exists)
   let bus = getBus(dbus.DBUS_BUS_SESSION)
   discard bus.openSession()
