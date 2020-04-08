@@ -3,7 +3,7 @@ import keyring
 
 test "set/get":
   let
-    service = "service"
+    service = "nimkeyring-service"
     user = "user"
     password = "password"
 
@@ -12,27 +12,53 @@ test "set/get":
   deletePassword(service, user)
   check getPassword(service, user).isNone()
 
+test "update":
+  let
+    service = "nimkeyring-service"
+    user = "user"
+    password1 = "password1"
+    password2 = "password2"
+
+  setPassword(service, user, password1)
+  defer:
+    deletePassword(service, user)
+  check getPassword(service, user).get() == password1
+  setPassword(service, user, password2)
+  check getPassword(service, user).get() == password2
+
 test "binary":
   let
-    service = "service"
+    service = "nimkeyring-service"
     user = "user"
     password = "password\x00foo"
 
   setPassword(service, user, password)
+  defer:
+    deletePassword(service, user)
   check getPassword(service, user).get() == password
-  deletePassword(service, user)
 
 test "no such password":
   check getPassword("gumshoe", "treble bark").isNone()
 
-test "unique":
-  setPassword("service1", "user1", "a")
-  setPassword("service2", "user1", "b")
-  setPassword("service1", "user2", "c")
-  setPassword("service2", "user2", "d")
+test "deleting non-existent":
+  deletePassword("gumshoe1", "treble bark2")
+  deletePassword("gumshoe1", "treble bark2")
 
-  check getPassword("service1", "user1").get() == "a"
-  check getPassword("service2", "user1").get() == "b"
-  check getPassword("service1", "user2").get() == "c"
-  check getPassword("service2", "user2").get() == "d"
-  
+test "unique":
+  setPassword("nimkeyring-service1", "user1", "a")
+  defer:
+    deletePassword("nimkeyring-service1", "user1")
+  setPassword("nimkeyring-service2", "user1", "b")
+  defer:
+    deletePassword("nimkeyring-service2", "user1")
+  setPassword("nimkeyring-service1", "user2", "c")
+  defer:
+    deletePassword("nimkeyring-service1", "user2")
+  setPassword("nimkeyring-service2", "user2", "d")
+  defer:
+    deletePassword("nimkeyring-service2", "user2")
+
+  check getPassword("nimkeyring-service1", "user1").get() == "a"
+  check getPassword("nimkeyring-service2", "user1").get() == "b"
+  check getPassword("nimkeyring-service1", "user2").get() == "c"
+  check getPassword("nimkeyring-service2", "user2").get() == "d"

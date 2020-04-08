@@ -1,47 +1,97 @@
-import os
-import osproc
 import options
 export options
-import streams
 import base64
+
+import ./macos_keyringapi
+
+# Big thanks to https://github.com/keybase/go-keychain
+# which served as an excellent reference implementation for this code
 
 proc setPassword*(service: string, username: string, password: string) =
   ## Save a password in the OS keychain
-  let cmd = quoteShellCommand([
-    # see `security add-generic-password --help`
-    "add-generic-password",
-    "-a", username,
-    "-s", service,
-    "-U",
-    "-w", password.encode()
-  ])
-  let p = startProcess(findExe"security", args = ["-i"])
-  p.inputStream().writeLine(cmd)
-  p.close()
-  if p.waitForExit() != 0:
+
+  # macOS password type
+  let
+    key1 = kSecClass
+    val1 = kSecClassGenericPassword
+    # service
+    k_service = kSecAttrService
+    v_service = mkCFString(service)
+    # account
+    k_account = kSecAttrAccount
+    v_account = mkCFString(username)
+    # password
+    k_password = kSecValueData
+    v_password = mkCFData(password.encode())
+
+  var ikeys:array[4,CFStringRef] = [key1, k_service, k_account, k_password]
+  var ivals:array[4,CFTypeRef] = [val1, v_service, v_account, v_password]
+  let ilen:CFIndex = ikeys.len.CFIndex
+  let item = CFDictionaryCreate(nil, ikeys.addr, ivals.addr, ilen, nil, nil)
+
+  var err = SecItemAdd(item, nil)
+  if err == errSecDuplicateItem:
+    # Since it's a duplicate, update the existing item
+    var qkeys:array[5, CFStringRef] = [key1, k_service, k_account, kSecMatchLimit,    kSecReturnData]
+    var qvals:array[5, CFTypeRef]   = [val1, v_service, v_account, kSecMatchLimitOne, kCFBooleanFalse]
+    let qlen:CFIndex = qkeys.len.CFIndex
+    let query = CFDictionaryCreate(nil, qkeys.addr, qvals.addr, qlen, nil, nil)
+
+    var pkeys:array[2, CFStringRef] = [key1, k_password]
+    var pvals:array[2, CFTypeRef] = [val1, v_password]
+    let plen:CFIndex = pkeys.len.CFIndex
+    let patch = CFDictionaryCreate(nil, pkeys.addr, pvals.addr, plen, nil, nil)
+
+    err = SecItemUpdate(query, patch)
+  
+  if err != errSecSuccess:
     raise newException(CatchableError, "Error saving password")
 
 proc getPassword*(service: string, username: string): Option[string] =
   ## Retrieve a previously-saved password from the OS keychain
-  let res = execCmdEx(quoteShellCommand([
-    # see `security find-generic-password --help`
-    "security",
-    "find-generic-password",
-    "-a", username,
-    "-s", service,
-    "-w",
-  ]))
-  if res.exitCode == 0:
-    return some(res.output[0 .. ^2].decode())
+  let
+    key1 = kSecClass
+    val1 = kSecClassGenericPassword
+    # service
+    k_service = kSecAttrService
+    v_service = mkCFString(service)
+    # account
+    k_account = kSecAttrAccount
+    v_account = mkCFString(username)
+  
+  var qkeys:array[5, CFStringRef] = [key1, k_service, k_account, kSecMatchLimit,    kSecReturnData]
+  var qvals:array[5, CFTypeRef] =   [val1, v_service, v_account, kSecMatchLimitOne, kCFBooleanTrue]
+  let qlen:CFIndex = qkeys.len.CFIndex
+  let query = CFDictionaryCreate(nil, qkeys.addr, qvals.addr, qlen, nil, nil)
+  
+  var password = mkCFData("")
+  let err = SecItemCopyMatching(query, cast[ptr CFTypeRef](password.addr))
+  if err == errSecSuccess:
+    return some(($password).decode())
   else:
     return none[string]()
 
 proc deletePassword*(service: string, username: string) =
   ## Delete a saved password (if it exists)
-  discard execCmdEx(quoteShellCommand([
-    # see `security delete-generic-password --help`
-    "security",
-    "delete-generic-password",
-    "-a", username,
-    "-s", service,
-  ]))
+  let
+    key1 = kSecClass
+    val1 = kSecClassGenericPassword
+    # service
+    k_service = kSecAttrService
+    v_service = mkCFString(service)
+    # account
+    k_account = kSecAttrAccount
+    v_account = mkCFString(username)
+  
+  var qkeys:array[4, CFStringRef] = [key1, k_service, k_account, kSecMatchLimit]
+  var qvals:array[4, CFStringRef] = [val1, v_service, v_account, kSecMatchLimitOne]
+  let qlen:CFIndex = qkeys.len.CFIndex
+  let query = CFDictionaryCreate(nil, qkeys.addr, qvals.addr, qlen, nil, nil)
+
+  let err = SecItemDelete(query)
+  if err == errSecItemNotFound:
+    discard
+  elif err == errSecSuccess:
+    discard
+  else:
+    raise newException(CatchableError, "Error deleting password")
