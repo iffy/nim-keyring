@@ -201,7 +201,11 @@ proc deletePassword*(service: string, username: string) {.gcsafe.} =
   let search_result = bus.call(search_msg)
   assert search_result[0].kind == dtArray
   assert search_result[0].arrayValue.len > 0
-  found_item_path = search_result[0].arrayValue[0].objectPathValue
+  let val0 = search_result[0].arrayValue[0]
+  if val0.kind != dtObjectPath:
+    # not found
+    return
+  found_item_path = val0.objectPathValue
 
   # unlock and delete
   bus.unlock(found_item_path)
