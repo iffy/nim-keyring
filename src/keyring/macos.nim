@@ -78,8 +78,9 @@ proc getPassword*(service: string, username: string): Option[string] =
   var password: CFDataRef
   let err = SecItemCopyMatching(query, cast[ptr CFTypeRef](password.addr))
   if err == errSecSuccess:
-    result = some(($password).decode())
-    CFRelease(password)
+    CFRetain(password)
+    defer: CFRelease(password)
+    result = some(password.getCFData().decode())
   else:
     result = none[string]()
 
