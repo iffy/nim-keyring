@@ -6,6 +6,7 @@ when defined(macosx):
   test "CFString roundtrip":
     let orig = "hello world!"
     let cf = mkCFString(orig)
+    defer: CFRelease(cf)
     let res = $cf
     check res == orig
     check res.len == orig.len
@@ -13,6 +14,7 @@ when defined(macosx):
   test "CFData roundtrip":
     let orig = "hello world!"
     let cf = mkCFData(orig)
+    defer: CFRelease(cf)
     let res = $cf
     check res == orig
     check res.len == orig.len

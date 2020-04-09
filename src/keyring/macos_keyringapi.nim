@@ -31,6 +31,7 @@ type
   CFBooleanRef* = ptr object of CFTypeRef
 
 # Types
+proc CFRelease*(cf: CFTypeRef) {.importc.}
 proc CFGetTypeID*(cf: CFTypeRef): CFTypeID {.importc.}
 proc CFBooleanGetTypeID*(): CFTypeID {.importc.}
 proc CFDataGetTypeID*(): CFTypeID {.importc.}
