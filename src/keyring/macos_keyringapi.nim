@@ -32,6 +32,7 @@ type
 
 # Types
 proc CFRelease*(cf: CFTypeRef) {.importc.}
+proc CFRetain*(cf: CFTypeRef) {.importc.}
 proc CFGetTypeID*(cf: CFTypeRef): CFTypeID {.importc.}
 proc CFBooleanGetTypeID*(): CFTypeID {.importc.}
 proc CFDataGetTypeID*(): CFTypeID {.importc.}
@@ -49,9 +50,10 @@ proc CFDictionaryGetKeysAndValues*(theDict: CFDictionaryRef, keys: pointer, valu
 
 # proc CFRangeMake*(loc, length: CFIndex): CFRange {.importc.}
 
-proc CFDataCreate*(allocator: pointer, bytes: ptr char, length: CFIndex): CFDataRef {.importc.}
-proc CFDataGetLength*(theData: CFDataRef): CFIndex {.importc.}
-proc CFDataGetBytes*(theData: CFDataRef, rang: CFRange, bytes: ptr char) {.importc.}
+proc CFDataCreate(allocator: pointer, bytes: pointer, length: CFIndex): CFDataRef {.importc.}
+proc CFDataGetLength(theData: CFDataRef): CFIndex {.importc.}
+proc CFDataGetBytes(theData: CFDataRef, rang: CFRange, bytes: pointer) {.importc.}
+proc CFDataGetBytePtr(theData: CFDataRef): pointer {.importc.}
 
 #---------------------------------------------------
 # Booleans
@@ -95,16 +97,25 @@ proc `$`*(s:CFStringRef):string =
   if not CFStringGetCString(s, result.cstring, size.CFIndex, kCFStringEncodingISOLatin1):
     raise newException(ValueError, "Unable to get CFString value")
 
-proc mkCFData*(x:cstring):CFDataRef {.inline.} =
-  CFDataCreate(nil, cast[ptr char](x.unsafeAddr), x.len.CFIndex)
+proc mkCFData*(x:string):CFDataRef {.inline.} =
+  CFDataCreate(nil, x.cstring, (x.len).CFIndex)
 
 proc getCFData*(theData: CFDataRef): string =
+  if theData.isNil:
+    raise newException(CatchableError, "Attempting to access nil CFDataRef")
   let length = CFDataGetLength(theData)
-  let s = newString(length.int + 1)
-  var c = s.cstring
-  let rang = CFRange(length:length, location:0.CFIndex)
-  CFDataGetBytes(theData, rang, cast[ptr char](c.unsafeAddr))
-  result = $c
+
+  when false:
+    # CFDataGetBytes method
+    let rang = CFRange(location:0.CFIndex, length:length)
+    result = newString(length.int)
+    CFDataGetBytes(theData, rang, result.cstring)
+  else:
+    # CFDataGetBytePtr method
+    result = newString(length.int)
+    let p = CFDataGetBytePtr(theData)
+    copyMem(result.cstring, p, length.int)
+  
 
 proc `$`*(s:CFDataRef):string {.inline.} =
   s.getCFData()
