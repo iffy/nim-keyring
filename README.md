@@ -29,7 +29,7 @@ Note that `getPassword(...)` returns `Option[string]`, so you can check whether 
 
 ### Error handling
 
-All 3 procs can raise `KeyringFailed` in the case of an error, so the following is a more complete example that handles errors:
+All 3 procs can raise `KeyringFailed` in the case of an error.  Additionally, different OS implementations might raise other errors (e.g. DBus erros on Linux), so the following is a more complete example that handles errors:
 
 ```nim
 import keyring

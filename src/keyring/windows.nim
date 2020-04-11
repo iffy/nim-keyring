@@ -52,7 +52,7 @@ proc setPassword*(service: string, username: string, password: string) {.raises:
       err_msg = "Unknown Error"
     raise newException(KeyringError, err_msg)
 
-proc getPassword*(service: string, username: string): Option[string] {.raises: [KeyringError].} =
+proc getPassword*(service: string, username: string): Option[string] {.raises: [KeyringError, ValueError].} =
   ## Retrieve a previously-saved password from the OS keychain
   let targetname = targetname(service, username)
   let cred_type:DWORD = CRED_TYPE_GENERIC
