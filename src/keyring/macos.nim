@@ -83,10 +83,10 @@ proc getPassword*(service: string, username: string): Option[string] {.raises: [
     defer: CFRelease(password)
     var password_string:string
     try:
-      password_string = password.getCFData()
+      password_string = password.getCFData().decode()
     except CatchableError:
       raise newException(KeyringError, "Unable to read password")
-    result = some(password_string.decode())
+    result = some(password_string)
   elif err == errSecItemNotFound:
     result = none[string]()
   else:
