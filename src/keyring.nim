@@ -1,3 +1,6 @@
+import keyring/errors
+export errors
+
 when defined(macosx):
   import keyring/macos
   export macos
@@ -8,4 +11,4 @@ elif defined(linux):
   import keyring/linux
   export linux
 else:
-  raise newException(CatchableError, "OS not supported")
+  raise newException(KeyringError, "OS not supported")

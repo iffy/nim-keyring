@@ -3,13 +3,15 @@ import options
 export options
 import base64
 
+import ./errors
+
 template toLPWSTR(x:string):LPWSTR = cast[LPWSTR](&(+$x))
 template toLPCWSTR(x:string):LPCWSTR = cast[LPCWSTR](&(+$x))
 
 template targetname(service: string, username: string):string =
   username & "@" & service
 
-proc setPassword*(service: string, username: string, password: string) =
+proc setPassword*(service: string, username: string, password: string) {.raises: [KeyringError].} =
   ## Save a password in the OS keychain
   let username = username
   let targetname = targetname(service, username)
@@ -48,9 +50,9 @@ proc setPassword*(service: string, username: string, password: string) =
       err_msg = "SCARD_W_WRONG_CHV: The wrong PIN was supplied for the CRED_TYPE_CERTIFICATE credential being written."
     else:
       err_msg = "Unknown Error"
-    raise newException(CatchableError, err_msg)
+    raise newException(KeyringError, err_msg)
 
-proc getPassword*(service: string, username: string): Option[string] =
+proc getPassword*(service: string, username: string): Option[string] {.raises: [KeyringError].} =
   ## Retrieve a previously-saved password from the OS keychain
   let targetname = targetname(service, username)
   let cred_type:DWORD = CRED_TYPE_GENERIC
@@ -75,16 +77,18 @@ proc getPassword*(service: string, username: string): Option[string] =
       err_msg = "ERROR_INVALID_FLAGS: A flag that is not valid was specified for the Flags parameter."
     else:
       err_msg = "Unknown Error"
-    raise newException(CatchableError, err_msg)
+    raise newException(KeyringError, err_msg)
     
   let password = ($cast[cstring](pcred[].CredentialBlob))[0 .. pcred[].CredentialBlobSize-1].decode()
   return some(password)
 
-proc deletePassword*(service: string, username: string) =
+proc deletePassword*(service: string, username: string) {.raises: [KeyringError].} =
   ## Delete a saved password (if it exists)
   let targetname = targetname(service, username)
-  discard CredDeleteW(
+  let res = CredDeleteW(
     targetname.toLPCWSTR(),
     CRED_TYPE_GENERIC,
     0,
   )
+  if res == 0:
+    raise newException(KeyringError, "Error deleting password")

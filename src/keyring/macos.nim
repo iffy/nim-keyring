@@ -2,12 +2,13 @@ import options
 export options
 import base64
 
+import ./errors
 import ./macos_keyringapi
 
 # Big thanks to https://github.com/keybase/go-keychain
 # which served as an excellent reference implementation for this code
 
-proc setPassword*(service: string, username: string, password: string) =
+proc setPassword*(service: string, username: string, password: string) {.raises: [KeyringError].} =
   ## Save a password in the OS keychain
 
   # macOS password type
@@ -52,9 +53,9 @@ proc setPassword*(service: string, username: string, password: string) =
     err = SecItemUpdate(query, patch)
   
   if err != errSecSuccess:
-    raise newException(CatchableError, "Error saving password")
+    raise newException(KeyringError, "Error saving password")
 
-proc getPassword*(service: string, username: string): Option[string] =
+proc getPassword*(service: string, username: string): Option[string] {.raises: [KeyringError].} =
   ## Retrieve a previously-saved password from the OS keychain
   let
     key1 = kSecClass
@@ -80,11 +81,18 @@ proc getPassword*(service: string, username: string): Option[string] =
   if err == errSecSuccess:
     CFRetain(password)
     defer: CFRelease(password)
-    result = some(password.getCFData().decode())
-  else:
+    var password_string:string
+    try:
+      password_string = password.getCFData()
+    except CatchableError:
+      raise newException(KeyringError, "Unable to read password")
+    result = some(password_string.decode())
+  elif err == errSecItemNotFound:
     result = none[string]()
+  else:
+    raise newException(KeyringError, "Error: " & $err)
 
-proc deletePassword*(service: string, username: string) =
+proc deletePassword*(service: string, username: string) {.raises: [KeyringError].} =
   ## Delete a saved password (if it exists)
   let
     key1 = kSecClass
@@ -111,4 +119,4 @@ proc deletePassword*(service: string, username: string) =
   elif err == errSecSuccess:
     discard
   else:
-    raise newException(CatchableError, "Error deleting password")
+    raise newException(KeyringError, "Error deleting password")

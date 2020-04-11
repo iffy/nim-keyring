@@ -3,13 +3,15 @@ export options
 import dbus
 import tables
 
+import ./errors
+
 const
   SS_PREFIX = "org.freedesktop.Secret."
   SS_PATH = "/org/freedesktop/secrets"
   BUS_NAME = "org.freedesktop.secrets"
   SERVICE_INTERFACE = SS_PREFIX & "Service"
   COLLECTION_INTERFACE = SS_PREFIX & "Collection"
-  ITEM_INTERFACE = SS_PREFIX & "Item"
+  # ITEM_INTERFACE = SS_PREFIX & "Item"
   DEFAULT_COLLECTION = "/org/freedesktop/secrets/aliases/default"
 
 
@@ -82,7 +84,7 @@ proc unlock(bus:Bus, thing:ObjectPath) =
   assert $(unlock_result[0].arrayValue[0].objectPathValue) == $thing
   assert $(unlock_result[1].objectPathValue) == "/" # special value indicating no prompt needed
 
-proc setPassword*(service: string, username: string, password: string) {.gcsafe.} =
+proc setPassword*(service: string, username: string, password: string) {.gcsafe, raises: [KeyringError].} =
   ## Save a password in the OS keychain
   let label = service & ":" & username
   let bus = getBus(dbus.DBUS_BUS_SESSION)
@@ -135,7 +137,7 @@ proc setPassword*(service: string, username: string, password: string) {.gcsafe.
   create_msg.append(true)
   discard bus.call(create_msg)
 
-proc getPassword*(service: string, username: string): Option[string] {.gcsafe.} =
+proc getPassword*(service: string, username: string): Option[string] {.gcsafe, raises: [KeyringError].} =
   ## Retrieve a previously-saved password from the OS keychain
   let bus = getBus(dbus.DBUS_BUS_SESSION)
   let session_object_path = bus.openSession()
@@ -179,7 +181,7 @@ proc getPassword*(service: string, username: string): Option[string] {.gcsafe.} 
   except:
     return none[string]()
 
-proc deletePassword*(service: string, username: string) {.gcsafe.} =
+proc deletePassword*(service: string, username: string) {.gcsafe, raises: [KeyringError].} =
   ## Delete a saved password (if it exists)
   let bus = getBus(dbus.DBUS_BUS_SESSION)
   discard bus.openSession()
