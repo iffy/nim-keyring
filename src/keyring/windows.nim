@@ -30,7 +30,7 @@ proc setPassword*(service: string, username: string, password: string) {.raises:
   let res = CredWriteW(pcred, flags)
   if res == 0:
     let err_code = GetLastError()
-    var err_msg = "Unknown Error"
+    var err_msg = "Unknown error"
     case err_code
     of ERROR_NO_SUCH_LOGON_SESSION:
       err_msg = "ERROR_NO_SUCH_LOGON_SESSION: The logon session does not exist or there is no credential set associated with this logon session. Network logon sessions do not have an associated credential set."
@@ -49,7 +49,7 @@ proc setPassword*(service: string, username: string, password: string) {.raises:
     of SCARD_W_WRONG_CHV:
       err_msg = "SCARD_W_WRONG_CHV: The wrong PIN was supplied for the CRED_TYPE_CERTIFICATE credential being written."
     else:
-      err_msg = "Unknown Error"
+      err_msg = "Unknown error"
     raise newException(KeyringError, err_msg)
 
 proc getPassword*(service: string, username: string): Option[string] {.raises: [KeyringError, ValueError].} =
@@ -67,16 +67,16 @@ proc getPassword*(service: string, username: string): Option[string] {.raises: [
     pcred.unsafeAddr)
   if res == 0:
     let err_code = GetLastError()
-    var err_msg = "Unknown Error"
+    var err_msg:string
     case err_code
     of ERROR_NOT_FOUND:
       return none[string]()
-    of ERROR_NO_SUCH_LOGON_SESSION :
+    of ERROR_NO_SUCH_LOGON_SESSION:
       err_msg = "ERROR_NO_SUCH_LOGON_SESSION: The logon session does not exist or there is no credential set associated with this logon session. Network logon sessions do not have an associated credential set."
     of ERROR_INVALID_FLAGS:
       err_msg = "ERROR_INVALID_FLAGS: A flag that is not valid was specified for the Flags parameter."
     else:
-      err_msg = "Unknown Error"
+      err_msg = "Unknown error"
     raise newException(KeyringError, err_msg)
     
   let password = ($cast[cstring](pcred[].CredentialBlob))[0 .. pcred[].CredentialBlobSize-1].decode()
@@ -90,5 +90,16 @@ proc deletePassword*(service: string, username: string) {.raises: [KeyringError]
     CRED_TYPE_GENERIC,
     0,
   )
-  if res == 0:
-    raise newException(KeyringError, "Error deleting password")
+  if res == 1:
+    let err_code = GetLastError()
+    var err_msg:string
+    case err_code
+    of ERROR_NOT_FOUND:
+      return
+    of ERROR_NO_SUCH_LOGON_SESSION:
+      err_msg = "ERROR_NO_SUCH_LOGON_SESSION: The logon session does not exist or there is no credential set associated with this logon session. Network logon sessions do not have an associated credential set."
+    of ERROR_INVALID_FLAGS:
+      err_msg = "ERROR_INVALID_FLAGS: A flag that is not valid was specified for the Flags parameter."
+    else:
+      err_msg = "Unknown error"
+    raise newException(KeyringError, err_msg)
