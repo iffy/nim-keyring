@@ -50,7 +50,7 @@ proc setPassword*(service: string, username: string, password: string) {.raises:
     of SCARD_W_WRONG_CHV:
       err_msg = "SCARD_W_WRONG_CHV: The wrong PIN was supplied for the CRED_TYPE_CERTIFICATE credential being written."
     else:
-      err_msg = &"Unknown error ({err_code})"
+      err_msg = fmt"Unknown error ({err_code})"
     raise newException(KeyringError, err_msg)
 
 proc getPassword*(service: string, username: string): Option[string] {.raises: [KeyringError, ValueError].} =
@@ -77,7 +77,7 @@ proc getPassword*(service: string, username: string): Option[string] {.raises: [
     of ERROR_INVALID_FLAGS:
       err_msg = "ERROR_INVALID_FLAGS: A flag that is not valid was specified for the Flags parameter."
     else:
-      err_msg = &"Unknown error ({err_code})"
+      err_msg = fmt"Unknown error ({err_code})"
     raise newException(KeyringError, err_msg)
     
   let password = ($cast[cstring](pcred[].CredentialBlob))[0 .. pcred[].CredentialBlobSize-1].decode()
@@ -102,5 +102,5 @@ proc deletePassword*(service: string, username: string) {.raises: [KeyringError]
     of ERROR_INVALID_FLAGS:
       err_msg = "ERROR_INVALID_FLAGS: A flag that is not valid was specified for the Flags parameter."
     else:
-      err_msg = &"Unknown error ({err_code})"
+      err_msg = fmt"Unknown error ({err_code})"
     raise newException(KeyringError, err_msg)
