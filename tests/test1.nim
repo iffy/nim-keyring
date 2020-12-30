@@ -10,6 +10,15 @@ template clean(body:untyped):untyped =
   when DOCLEANUP:
     body
 
+template cd(dirname: string, body: untyped): untyped =
+  block:
+    let orig = getCurrentDir().absolutePath()
+    try:
+      setCurrentDir(dirname)
+      body
+    finally:
+      setCurrentDir(orig)
+
 test "set/get":
   let
     service = "nimkeyring-service"
@@ -93,15 +102,16 @@ else:
   """
   clean:
     defer: deletePassword("nimkeyring-twice", "double")
-  writeFile(filename, snippet)
-  defer: removeFile(filename)
-  checkpoint "Run #1"
-  let (outp1, rc1) = execCmdEx("nim c -r " & filename)
-  checkpoint outp1
-  assert rc1 == 0
-  
-  checkpoint "Run #2"
-  let (outp2, rc2) = execCmdEx("nim c -r " & filename)
-  checkpoint outp2
-  assert rc2 == 0
+  cd currentSourcePath().parentDir().absolutePath():
+    writeFile(filename, snippet)
+    defer: removeFile(filename)
+    checkpoint "Run #1"
+    let (outp1, rc1) = execCmdEx("nim c -r " & filename)
+    checkpoint outp1
+    assert rc1 == 0
+    
+    checkpoint "Run #2"
+    let (outp2, rc2) = execCmdEx("nim c -r " & filename)
+    checkpoint outp2
+    assert rc2 == 0
   

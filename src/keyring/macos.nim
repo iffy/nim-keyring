@@ -53,7 +53,7 @@ proc setPassword*(service: string, username: string, password: string) {.raises:
     err = SecItemUpdate(query, patch)
   
   if err != errSecSuccess:
-    raise newException(KeyringError, "Error saving password")
+    raise newException(KeyringError, "Error saving password (" & $err & ")")
 
 proc getPassword*(service: string, username: string): Option[string] {.raises: [KeyringError].} =
   ## Retrieve a previously-saved password from the OS keychain
@@ -119,4 +119,4 @@ proc deletePassword*(service: string, username: string) {.raises: [KeyringError]
   elif err == errSecSuccess:
     discard
   else:
-    raise newException(KeyringError, "Error deleting password")
+    raise newException(KeyringError, "Error deleting password (" & $err & ")")

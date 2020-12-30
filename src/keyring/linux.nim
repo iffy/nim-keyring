@@ -36,7 +36,7 @@ proc toByteArray(s:string):seq[uint8] =
     result.add(ord(c).uint8)
 
 proc dbusByteArrayToString(d: DbusValue):string =
-  assert d.kind == dtArray
+  doAssert d.kind == dtArray
   for item in d.arrayValue:
     result.add(char(item.asNative(uint8)))
 
@@ -70,7 +70,7 @@ proc openSession(bus:Bus): ObjectPath =
   msg.append(newVariant[string](""))
   let open_result = bus.call(msg)
   result = open_result[^1].objectPathValue
-  assert $result != ""
+  doAssert $result != ""
 
 proc unlock(bus:Bus, thing:ObjectPath) =
   var unlock_msg = makeCall(
@@ -81,8 +81,8 @@ proc unlock(bus:Bus, thing:ObjectPath) =
   )
   unlock_msg.append(@[thing])
   let unlock_result = bus.call(unlock_msg)
-  assert $(unlock_result[0].arrayValue[0].objectPathValue) == $thing
-  assert $(unlock_result[1].objectPathValue) == "/" # special value indicating no prompt needed
+  doAssert $(unlock_result[0].arrayValue[0].objectPathValue) == $thing
+  doAssert $(unlock_result[1].objectPathValue) == "/" # special value indicating no prompt needed
 
 
 proc setPassword*(service: string, username: string, password: string) {.gcsafe, raises: [KeyringError, DbusException, ValueError, Exception].} =
@@ -159,8 +159,8 @@ proc getPassword*(service: string, username: string): Option[string] {.gcsafe, r
   var found_item_path:ObjectPath
   try:
     let search_result = bus.call(search_msg)
-    assert search_result[0].kind == dtArray
-    assert search_result[0].arrayValue.len > 0
+    doAssert search_result[0].kind == dtArray
+    doAssert search_result[0].arrayValue.len > 0
     found_item_path = search_result[0].arrayValue[0].objectPathValue
   except:
     return none[string]()
@@ -177,7 +177,7 @@ proc getPassword*(service: string, username: string): Option[string] {.gcsafe, r
   try:
     let get_result = bus.call(get_msg)
     let secret = get_result[0]
-    assert secret.kind == dtStruct
+    doAssert secret.kind == dtStruct
     return some[string](dbusByteArrayToString(secret.structValues[2]))
   except:
     return none[string]()
@@ -202,8 +202,10 @@ proc deletePassword*(service: string, username: string) {.gcsafe, raises: [Keyri
   search_msg.append(attrs)
   var found_item_path:ObjectPath
   let search_result = bus.call(search_msg)
-  assert search_result[0].kind == dtArray
-  assert search_result[0].arrayValue.len > 0
+  doAssert search_result[0].kind == dtArray
+  if search_result[0].arrayValue.len == 0:
+    # not found
+    return
   let val0 = search_result[0].arrayValue[0]
   if val0.kind != dtObjectPath:
     # not found
