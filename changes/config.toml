@@ -1,3 +1,4 @@
+update_nimble = true
 # Replacements are string substitutions using
 # https://nitely.github.io/nim-regex/regex.html#replace%2Cstring%2CRegex%2Cstring%2Cint
 # They run on each snippet in the order defined, before the snippet is
