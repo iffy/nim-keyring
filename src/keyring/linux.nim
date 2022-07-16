@@ -43,6 +43,10 @@ proc dbusByteArrayToString(d: DbusValue):string =
 proc `$`(objpath:ObjectPath):string =
   cast[string](objpath)
 
+proc objectPathValueOrFail(x: DbusValue, msg = ""): ObjectPath =
+  doAssert x.kind == dtObjectPath, "Expected ObjectPath but found " & $(x.kind) & " " & msg
+  return x.objectPathValue
+
 proc call(bus: Bus, msg: Message):seq[DbusValue] = 
   let pending = bus.sendMessageWithReply(msg)
   let reply = pending.waitForReply()
@@ -69,7 +73,7 @@ proc openSession(bus:Bus): ObjectPath =
   msg.append("plain")
   msg.append(newVariant[string](""))
   let open_result = bus.call(msg)
-  result = open_result[^1].objectPathValue
+  result = open_result[^1].objectPathValueOrFail("in openSession")
   doAssert $result != ""
 
 proc unlock(bus:Bus, thing:ObjectPath) =
@@ -81,8 +85,8 @@ proc unlock(bus:Bus, thing:ObjectPath) =
   )
   unlock_msg.append(@[thing])
   let unlock_result = bus.call(unlock_msg)
-  doAssert $(unlock_result[0].arrayValue[0].objectPathValue) == $thing
-  doAssert $(unlock_result[1].objectPathValue) == "/" # special value indicating no prompt needed
+  doAssert $(unlock_result[0].arrayValue[0].objectPathValueOrFail("in unlock")) == $thing
+  doAssert $(unlock_result[1].objectPathValueOrFail("in unlock")) == "/" # special value indicating no prompt needed
 
 
 proc setPassword*(service: string, username: string, password: string) {.gcsafe, raises: [KeyringError, DbusException, ValueError, Exception].} =
@@ -161,7 +165,7 @@ proc getPassword*(service: string, username: string): Option[string] {.gcsafe, r
     let search_result = bus.call(search_msg)
     doAssert search_result[0].kind == dtArray
     doAssert search_result[0].arrayValue.len > 0
-    found_item_path = search_result[0].arrayValue[0].objectPathValue
+    found_item_path = search_result[0].arrayValue[0].objectPathValueOrFail("in getPassword")
   except:
     return none[string]()
 
@@ -210,7 +214,7 @@ proc deletePassword*(service: string, username: string) {.gcsafe, raises: [Keyri
   if val0.kind != dtObjectPath:
     # not found
     return
-  found_item_path = val0.objectPathValue
+  found_item_path = val0.objectPathValueOrFail("in deletePassword")
 
   # unlock and delete
   bus.unlock(found_item_path)
