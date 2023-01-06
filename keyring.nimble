@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.3.1"
+version       = "0.4.0"
 author        = "Matt Haggard"
 description   = "Cross-platform OS keyring interface"
 license       = "MIT"
