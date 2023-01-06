@@ -20,6 +20,7 @@ nimble install keyring
 ```nim
 import keyring
 
+assert keyringAvailable()
 setPassword("my-service", "myuser", "secretpassword")
 assert getPassword("my-service", "myuser").get() == "secretpassword"
 deletePassword("my-service", "myuser")
@@ -29,10 +30,15 @@ Note that `getPassword(...)` returns `Option[string]`, so you can check whether 
 
 ### Error handling
 
-All 3 procs can raise `KeyringFailed` in the case of an error.  Additionally, different OS implementations might raise other errors (e.g. DBus erros on Linux), so the following is a more complete example that handles errors:
+All 3 procs can raise `KeyringFailed` or `KeyringNotSupported` in the case of an error.  Some errors are transient, such as if the user doesn't enter the right password.  Other errors are more permanent (e.g. keychain software isn't installed on Linux). Use `keyringAvailable()` to detect if the keyring works for the current system.
+
+Additionally, different OS implementations might raise other errors (e.g. DBus erros on Linux), so the following is a more complete example that handles errors:
 
 ```nim
 import keyring
+
+if not keyringAvailable():
+  echo "Keyring is not going to work."
 
 try:
   setPassword("my-service", "myuser", "secret")
