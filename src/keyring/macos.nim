@@ -8,6 +8,8 @@ import ./macos_keyringapi
 # Big thanks to https://github.com/keybase/go-keychain
 # which served as an excellent reference implementation for this code
 
+proc keyringAvailable*(): bool = true
+
 proc setPassword*(service: string, username: string, password: string) {.raises: [KeyringError].} =
   ## Save a password in the OS keychain
 

@@ -53,7 +53,7 @@ proc call(bus: Bus, msg: Message):seq[DbusValue] =
   if reply.type == rtError:
     case reply.errorName
     of "org.freedesktop.DBus.Error.ServiceUnknown":
-      raise newException(CatchableError, "No SecretService backend available.")
+      raise newException(KeyringNotSupported, "No SecretService backend available.")
   reply.raiseIfError()
   var it = reply.iterate()
   while true:
@@ -88,11 +88,29 @@ proc unlock(bus:Bus, thing:ObjectPath) =
   doAssert $(unlock_result[0].arrayValue[0].objectPathValueOrFail("in unlock")) == $thing
   doAssert $(unlock_result[1].objectPathValueOrFail("in unlock")) == "/" # special value indicating no prompt needed
 
+proc getBus(): Bus =
+  try:
+    return getBus(dbus.DBUS_BUS_SESSION)
+  except DbusException as exc:
+    let e2 = newException(KeyringNotSupported, getCurrentExceptionMsg())
+    e2.parent = exc
+    raise e2
+
+proc keyringAvailable*(): bool =
+  let bus = try:
+    getBus()
+  except:
+    return false
+  try:
+    discard bus.openSession()
+  except:
+    return false
+  return true
 
 proc setPassword*(service: string, username: string, password: string) {.gcsafe, raises: [KeyringError, DbusException, ValueError, Exception].} =
   ## Save a password in the OS keychain
   let label = service & ":" & username
-  let bus = getBus(dbus.DBUS_BUS_SESSION)
+  let bus = getBus()
   let session_object_path = bus.openSession()
   bus.unlock(ObjectPath(DEFAULT_COLLECTION))
   
@@ -144,7 +162,7 @@ proc setPassword*(service: string, username: string, password: string) {.gcsafe,
 
 proc getPassword*(service: string, username: string): Option[string] {.gcsafe, raises: [KeyringError, DbusException, ValueError, Exception].} =
   ## Retrieve a previously-saved password from the OS keychain
-  let bus = getBus(dbus.DBUS_BUS_SESSION)
+  let bus = getBus()
   let session_object_path = bus.openSession()
   bus.unlock(ObjectPath(DEFAULT_COLLECTION))
 
@@ -188,7 +206,7 @@ proc getPassword*(service: string, username: string): Option[string] {.gcsafe, r
 
 proc deletePassword*(service: string, username: string) {.gcsafe, raises: [KeyringError, DbusException, ValueError, Exception].} =
   ## Delete a saved password (if it exists)
-  let bus = getBus(dbus.DBUS_BUS_SESSION)
+  let bus = getBus()
   discard bus.openSession()
   bus.unlock(ObjectPath(DEFAULT_COLLECTION))
 

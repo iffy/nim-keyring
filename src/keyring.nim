@@ -7,6 +7,9 @@ when defined(macosx):
 elif defined(windows):
   import keyring/windows
   export windows
+elif defined(android):
+  import keyring/android
+  export android
 elif defined(linux):
   import keyring/linux
   export linux

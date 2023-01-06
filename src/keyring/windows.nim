@@ -11,6 +11,8 @@ template toLPCWSTR(x:string):LPCWSTR = cast[LPCWSTR](&(+$x))
 template targetname(service: string, username: string):string =
   username & "@" & service
 
+proc keyringAvailable*(): bool = true
+
 proc setPassword*(service: string, username: string, password: string) {.raises: [KeyringError].} =
   ## Save a password in the OS keychain
   let username = username
