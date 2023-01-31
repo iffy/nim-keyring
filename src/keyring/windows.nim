@@ -67,6 +67,8 @@ proc getPassword*(service: string, username: string): Option[string] {.raises: [
     cred_type,
     flags,
     pcred.unsafeAddr)
+  defer: pcred.CredFree
+  
   if res == 0:
     let err_code = GetLastError()
     var err_msg:string
