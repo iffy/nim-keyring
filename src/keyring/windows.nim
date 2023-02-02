@@ -67,7 +67,7 @@ proc getPassword*(service: string, username: string): Option[string] {.raises: [
     cred_type,
     flags,
     pcred.unsafeAddr)
-  defer: pcred.CredFree
+  defer: pcred.unsafeAddr.CredFree #Win32 buffer must be freed
   
   if res == 0:
     let err_code = GetLastError()
