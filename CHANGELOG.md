@@ -1,3 +1,7 @@
+# v0.4.1 - 2023-02-06
+
+- **FIX:** Fix memory leak on Windows (#16)
+
 # v0.4.0 - 2023-01-06
 
 - **NEW:** Add `keyringAvailable()` to determine if the keyring works. This is to help distinguish between transient errors and more permanent ones.
