@@ -70,8 +70,10 @@ proc openSession(bus:Bus): ObjectPath =
     SERVICE_INTERFACE,
     "OpenSession",
   )
-  msg.append("plain")
-  msg.append(newVariant[string](""))
+  {.gcsafe.}:
+    msg.append("plain")
+  {.gcsafe.}:
+    msg.append(newVariant[string](""))
   let open_result = bus.call(msg)
   result = open_result[^1].objectPathValueOrFail("in openSession")
   doAssert $result != ""
@@ -83,7 +85,8 @@ proc unlock(bus:Bus, thing:ObjectPath) =
     SERVICE_INTERFACE,
     "Unlock",
   )
-  unlock_msg.append(@[thing])
+  {.gcsafe.}:
+    unlock_msg.append(@[thing])
   let unlock_result = bus.call(unlock_msg)
   doAssert $(unlock_result[0].arrayValue[0].objectPathValueOrFail("in unlock")) == $thing
   doAssert $(unlock_result[1].objectPathValueOrFail("in unlock")) == "/" # special value indicating no prompt needed
@@ -146,18 +149,21 @@ proc setPassword*(service: string, username: string, password: string) {.gcsafe,
     (SS_PREFIX & "Item.Attributes").asDbusValue(),
     newVariant(inner).asDbusValue()
   )
-  create_msg.append(outer)
+  {.gcsafe.}:
+    create_msg.append(outer)
   # TODO: this is where in-transit encryption would happen
-  create_msg.append(
-    DbusValue(kind: dtStruct, structValues: @[
-      session_object_path.asDbusValue(),
-      "".toByteArray().asDbusValue(),
-      password.toByteArray().asDbusValue(),
-      "text/plain".asDbusValue(),
-    ])
-  )
+  {.gcsafe.}:
+    create_msg.append(
+      DbusValue(kind: dtStruct, structValues: @[
+        session_object_path.asDbusValue(),
+        "".toByteArray().asDbusValue(),
+        password.toByteArray().asDbusValue(),
+        "text/plain".asDbusValue(),
+      ])
+    )
   # create_msg.append(password)
-  create_msg.append(true)
+  {.gcsafe.}:
+    create_msg.append(true)
   discard bus.call(create_msg)
 
 proc getPassword*(service: string, username: string): Option[string] {.gcsafe, raises: [KeyringError, DbusException, ValueError, Exception].} =
@@ -177,7 +183,8 @@ proc getPassword*(service: string, username: string): Option[string] {.gcsafe, r
     "service": service,
     "username": username,
   }.toTable()
-  search_msg.append(attrs)
+  {.gcsafe.}:
+    search_msg.append(attrs)
   var found_item_path:ObjectPath
   try:
     let search_result = bus.call(search_msg)
@@ -195,7 +202,8 @@ proc getPassword*(service: string, username: string): Option[string] {.gcsafe, r
     ITEM_INTERFACE,
     "GetSecret",
   )
-  get_msg.append(session_object_path)
+  {.gcsafe.}:
+    get_msg.append(session_object_path)
   try:
     let get_result = bus.call(get_msg)
     let secret = get_result[0]
@@ -221,7 +229,8 @@ proc deletePassword*(service: string, username: string) {.gcsafe, raises: [Keyri
     "service": service,
     "username": username,
   }.toTable()
-  search_msg.append(attrs)
+  {.gcsafe.}:
+    search_msg.append(attrs)
   var found_item_path:ObjectPath
   let search_result = bus.call(search_msg)
   doAssert search_result[0].kind == dtArray
