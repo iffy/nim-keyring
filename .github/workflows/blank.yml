@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: [stable]
+        version: [binary:stable]
     steps:
     - uses: actions/checkout@v1
     - uses: iffy/install-nim@v5
@@ -34,7 +34,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        version: [stable]
+        version: [binary:stable]
         os: [macOS-latest, windows-latest]
     steps:
     - uses: actions/checkout@v1
