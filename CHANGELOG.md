@@ -1,3 +1,7 @@
+# v0.4.2 - 2024-02-22
+
+- **FIX:** Annotate dbus.append calls with {.gcsafe.}
+
 # v0.4.1 - 2023-02-06
 
 - **FIX:** Fix memory leak on Windows (#16)
